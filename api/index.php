@@ -2,7 +2,7 @@
 
 // 1. Definisikan lingkungan produksi & debug
 $_ENV['APP_ENV'] = 'production';
-$_ENV['APP_DEBUG'] = 'true'; // Biarkan true dulu untuk memastikan web benar-benar menyala
+$_ENV['APP_DEBUG'] = 'true'; 
 
 // 2. Siapkan database SQLite otomatis di folder /tmp
 $dbPath = '/tmp/database.sqlite';
@@ -11,23 +11,37 @@ if (!file_exists($dbPath)) {
 }
 $_ENV['DB_CONNECTION'] = 'sqlite';
 $_ENV['DB_DATABASE'] = $dbPath;
-
-// 3. SOLUSI ERROR: Alahkan Log ke stderr (agar dibaca oleh Vercel Logs, bukan file)
 $_ENV['LOG_CHANNEL'] = 'stderr';
+
+// 3. SOLUSI UTAMA: Buat struktur folder bootstrap/cache dan storage di /tmp yang bersifat writable
+$runtimeDirs = [
+    '/tmp/storage/framework/views',
+    '/tmp/storage/framework/cache',
+    '/tmp/storage/framework/sessions',
+    '/tmp/bootstrap/cache'
+];
+
+foreach ($runtimeDirs as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+}
 
 // 4. Jalankan bootstrap Autoload Laravel
 require __DIR__ . '/../vendor/autoload.php';
 
-// 5. SOLUSI ERROR CACHE: Alihkan folder bootstrap/cache dan storage ke /tmp yang bisa ditulis
+// 5. Override jalur bootstrap cache sebelum memuat app.php
+// Kita beri tahu Laravel untuk membaca & menulis cache ke /tmp/bootstrap/cache
+if (!defined('LARAVEL_START')) {
+    define('LARAVEL_START', microtime(true));
+}
+
+// Mengakali letak bootstrap cache menggunakan variable global sebelum kernel berjalan
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// Memaksa Laravel menggunakan folder /tmp untuk menyimpan cache view, session, dan log internal
+// Atur ulang jalur storage dan cache manifest secara runtime
 $app->useStoragePath('/tmp/storage');
-
-// Membuat struktur folder storage darurat di dalam /tmp jika belum ada
-if (!is_dir('/tmp/storage/framework/views')) {
-    mkdir('/tmp/storage/framework/views', 0755, true);
-}
+$app->useBootstrapPath('/tmp/bootstrap');
 
 // 6. Jalankan aplikasi seperti biasa
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
