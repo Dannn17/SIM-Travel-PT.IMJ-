@@ -9,12 +9,22 @@ export default {
         './vendor/laravel/jetstream/**/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        // Tambahkan baris di bawah ini jika kamu meletakkan file komponen Tailwick di dalam resources/js
+        './resources/js/**/*.vnode', 
+        './resources/js/**/*.js',
     ],
 
     theme: {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+            // --- TAMBAHAN UNTUK TAILWICK ---
+            spacing: {
+                'header': '70px', // Mengatasi error 'spacing.header' does not exist
+                'vertical-menu': '250px', // Biasanya dibutuhkan juga oleh Tailwick
+                'vertical-menu-md': '160px',
+                'vertical-menu-sm': '70px',
             },
         },
     },
